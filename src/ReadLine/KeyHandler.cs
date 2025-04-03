@@ -31,15 +31,20 @@ namespace Internal.ReadLine
 
         private void MoveCursorLeft()
         {
-            if (IsStartOfLine())
-                return;
+            MoveCursorLeft(1);
+        }
 
-            if (IsStartOfBuffer())
+        private void MoveCursorLeft(int count)
+        {
+            if (count > _cursorPos)
+                count = _cursorPos;
+
+            if (count > Console2.CursorLeft)
                 Console2.SetCursorPosition(Console2.BufferWidth - 1, Console2.CursorTop - 1);
             else
-                Console2.SetCursorPosition(Console2.CursorLeft - 1, Console2.CursorTop);
+                Console2.SetCursorPosition(Console2.CursorLeft - count, Console2.CursorTop);
 
-            _cursorPos--;
+            _cursorPos -= count;
         }
 
         private void MoveCursorHome()
@@ -76,8 +81,7 @@ namespace Internal.ReadLine
         private void ClearLine()
         {
             MoveCursorEnd();
-            while (!IsStartOfLine())
-                Backspace();
+            Backspace(_cursorPos);
         }
 
         private void WriteNewString(string str)
@@ -93,7 +97,11 @@ namespace Internal.ReadLine
                 WriteChar(character);
         }
 
-        private void WriteChar() => WriteChar(_keyInfo.KeyChar);
+        private void WriteChar()
+        {
+            if (!char.IsControl(_keyInfo.KeyChar))
+                WriteChar(_keyInfo.KeyChar);
+        }
 
         private void WriteChar(char c)
         {
@@ -119,18 +127,24 @@ namespace Internal.ReadLine
 
         private void Backspace()
         {
-            if (IsStartOfLine())
-                return;
+            Backspace(1);
+        }
 
-            MoveCursorLeft();
+        private void Backspace(int count)
+        {
+            if (count > _cursorPos)
+                count = _cursorPos;
+
+            MoveCursorLeft(count);
             int index = _cursorPos;
-            _text.Remove(index, 1);
+            _text.Remove(index, count);
             string replacement = _text.ToString().Substring(index);
             int left = Console2.CursorLeft;
             int top = Console2.CursorTop;
-            Console2.Write(string.Format("{0} ", replacement));
+            string spaces = new string(' ', count);
+            Console2.Write(string.Format("{0}{1}", replacement, spaces));
             Console2.SetCursorPosition(left, top);
-            _cursorLimit--;
+            _cursorLimit -= count;
         }
 
         private void Delete()
@@ -152,7 +166,7 @@ namespace Internal.ReadLine
         {
             // local helper functions
             bool almostEndOfLine() => (_cursorLimit - _cursorPos) == 1;
-            int incrementIf(Func<bool> expression, int index) =>  expression() ? index + 1 : index;
+            int incrementIf(Func<bool> expression, int index) => expression() ? index + 1 : index;
             int decrementIf(Func<bool> expression, int index) => expression() ? index - 1 : index;
 
             if (IsStartOfLine()) { return; }
@@ -177,8 +191,7 @@ namespace Internal.ReadLine
 
         private void StartAutoComplete()
         {
-            while (_cursorPos > _completionStart)
-                Backspace();
+            Backspace(_cursorPos - _completionStart);
 
             _completionsIndex = 0;
 
@@ -187,8 +200,7 @@ namespace Internal.ReadLine
 
         private void NextAutoComplete()
         {
-            while (_cursorPos > _completionStart)
-                Backspace();
+            Backspace(_cursorPos - _completionStart);
 
             _completionsIndex++;
 
@@ -200,8 +212,7 @@ namespace Internal.ReadLine
 
         private void PreviousAutoComplete()
         {
-            while (_cursorPos > _completionStart)
-                Backspace();
+            Backspace(_cursorPos - _completionStart);
 
             _completionsIndex--;
 
@@ -275,15 +286,13 @@ namespace Internal.ReadLine
             _keyActions["ControlN"] = NextHistory;
             _keyActions["ControlU"] = () =>
             {
-                while (!IsStartOfLine())
-                    Backspace();
+                Backspace(_cursorPos);
             };
             _keyActions["ControlK"] = () =>
             {
                 int pos = _cursorPos;
                 MoveCursorEnd();
-                while (_cursorPos > pos)
-                    Backspace();
+                Backspace(_cursorPos - pos);
             };
             _keyActions["ControlW"] = () =>
             {
