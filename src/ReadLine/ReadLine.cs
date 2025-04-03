@@ -26,14 +26,13 @@ namespace System
             KeyHandler keyHandler = new KeyHandler(new Console2(), _history, AutoCompletionHandler);
             string text = GetText(keyHandler);
 
-            if (String.IsNullOrWhiteSpace(text) && !String.IsNullOrWhiteSpace(@default))
+            if (string.IsNullOrWhiteSpace(text) && !string.IsNullOrWhiteSpace(@default))
             {
                 text = @default;
             }
-            else
+            else if (HistoryEnabled)
             {
-                if (HistoryEnabled)
-                    _history.Add(text);
+                _history.Add(text);
             }
 
             return text;

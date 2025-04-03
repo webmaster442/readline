@@ -15,24 +15,25 @@ namespace Internal.ReadLine
         private int _historyIndex;
         private ConsoleKeyInfo _keyInfo;
         private Dictionary<string, Action> _keyActions;
-        private string[] _completions;
+        private IReadOnlyList<string> _completions;
         private int _completionStart;
         private int _completionsIndex;
         private IConsole Console2;
 
-        private bool IsStartOfLine() => _cursorPos == 0;
+        private bool IsStartOfLine() 
+            => _cursorPos == 0;
 
-        private bool IsEndOfLine() => _cursorPos == _cursorLimit;
+        private bool IsEndOfLine()
+            => _cursorPos == _cursorLimit;
 
-        private bool IsStartOfBuffer() => Console2.CursorLeft == 0;
+        private bool IsEndOfBuffer()
+            => Console2.CursorLeft == Console2.BufferWidth - 1;
 
-        private bool IsEndOfBuffer() => Console2.CursorLeft == Console2.BufferWidth - 1;
-        private bool IsInAutoCompleteMode() => _completions != null;
+        private bool IsInAutoCompleteMode()
+            => _completions != null;
 
         private void MoveCursorLeft()
-        {
-            MoveCursorLeft(1);
-        }
+            => MoveCursorLeft(1);
 
         private void MoveCursorLeft(int count)
         {
@@ -47,16 +48,14 @@ namespace Internal.ReadLine
             _cursorPos -= count;
         }
 
-        private void MoveCursorHome()
-        {
-            while (!IsStartOfLine())
-                MoveCursorLeft();
-        }
+        private void MoveCursorHome() 
+            => MoveCursorLeft(_cursorPos);
 
         private string BuildKeyInput()
         {
-            return (_keyInfo.Modifiers != ConsoleModifiers.Control && _keyInfo.Modifiers != ConsoleModifiers.Shift) ?
-                _keyInfo.Key.ToString() : _keyInfo.Modifiers.ToString() + _keyInfo.Key.ToString();
+            return (_keyInfo.Modifiers != ConsoleModifiers.Control && _keyInfo.Modifiers != ConsoleModifiers.Shift)
+                ? _keyInfo.Key.ToString() 
+                : $"{_keyInfo.Modifiers}{_keyInfo.Key.ToString()}";
         }
 
         private void MoveCursorRight()
@@ -204,7 +203,7 @@ namespace Internal.ReadLine
 
             _completionsIndex++;
 
-            if (_completionsIndex == _completions.Length)
+            if (_completionsIndex == _completions.Count)
                 _completionsIndex = 0;
 
             WriteString(_completions[_completionsIndex]);
@@ -217,7 +216,7 @@ namespace Internal.ReadLine
             _completionsIndex--;
 
             if (_completionsIndex == -1)
-                _completionsIndex = _completions.Length - 1;
+                _completionsIndex = _completions.Count - 1;
 
             WriteString(_completions[_completionsIndex]);
         }
@@ -318,7 +317,7 @@ namespace Internal.ReadLine
                     _completionStart = _completionStart == -1 ? 0 : _completionStart + 1;
 
                     _completions = autoCompleteHandler.GetSuggestions(text, _completionStart);
-                    _completions = _completions?.Length == 0 ? null : _completions;
+                    _completions = _completions?.Count == 0 ? null : _completions;
 
                     if (_completions == null)
                         return;
@@ -344,8 +343,7 @@ namespace Internal.ReadLine
             if (IsInAutoCompleteMode() && _keyInfo.Key != ConsoleKey.Tab)
                 ResetAutoComplete();
 
-            Action action;
-            _keyActions.TryGetValue(BuildKeyInput(), out action);
+            _keyActions.TryGetValue(BuildKeyInput(), out Action action);
             action = action ?? WriteChar;
             action.Invoke();
         }

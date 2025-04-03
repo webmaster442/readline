@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace ConsoleApplication
 {
@@ -26,7 +27,7 @@ namespace ConsoleApplication
     class AutoCompletionHandler : IAutoCompleteHandler
     {
         public char[] Separators { get; set; } = new char[] { ' ', '.', '/', '\\', ':' };
-        public string[] GetSuggestions(string text, int index)
+        public IReadOnlyList<string> GetSuggestions(string text, int index)
         {
             if (text.StartsWith("git "))
                 return new string[] { "init", "clone", "pull", "push" };

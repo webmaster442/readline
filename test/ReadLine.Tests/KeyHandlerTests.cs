@@ -16,7 +16,7 @@ namespace ReadLine.Tests
         private KeyHandler _keyHandler;
         private List<string> _history;
         private AutoCompleteHandler _autoCompleteHandler;
-        private string[] _completions;
+        private IReadOnlyList<string> _completions;
         private Internal.ReadLine.Abstractions.IConsole _console;
 
         public KeyHandlerTests()
