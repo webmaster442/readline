@@ -1,11 +1,9 @@
-using System;
 using System.Collections.Generic;
 
-namespace ReadLine.Tests
+namespace ReadLine.Tests;
+
+internal class AutoCompleteHandler : IAutoCompleteHandler
 {
-    class AutoCompleteHandler : IAutoCompleteHandler
-    {
-        public char[] Separators { get; set; } = new char[] { ' ', '.', '/', '\\', ':' };
-        public IReadOnlyList<string> GetSuggestions(string text, int index) => new string[] { "World", "Angel", "Love" };
-    }
+    public char[] Separators { get; set; } = [' ', '.', '/', '\\', ':'];
+    public IReadOnlyList<string> GetSuggestions(string text, int index) => ["World", "Angel", "Love"];
 }

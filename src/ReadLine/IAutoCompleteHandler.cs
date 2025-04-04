@@ -1,10 +1,9 @@
 using System.Collections.Generic;
 
-namespace System
+namespace ReadLine;
+
+public interface IAutoCompleteHandler
 {
-    public interface IAutoCompleteHandler
-    {
-        char[] Separators { get; set; }
-        IReadOnlyList<string> GetSuggestions(string text, int index);
-    }
+    char[] Separators { get; set; }
+    IReadOnlyList<string> GetSuggestions(string text, int index);
 }

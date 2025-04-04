@@ -1,30 +1,34 @@
-﻿using Internal.ReadLine;
-using Internal.ReadLine.Abstractions;
-
+﻿using ReadLine.Abstractions;
+using System;
 using System.Collections.Generic;
 
-namespace System
+namespace ReadLine
 {
-    public static class ReadLine
+    public class LineReader
     {
-        private static List<string> _history;
+        private readonly IConsole _consoleDriver;
+        private readonly KeyHandler _keyHandler;
 
-        static ReadLine()
+        public List<string> History { get; }
+
+        public bool HistoryEnabled { get; set; }
+
+        public LineReader(IConsole consoleDriver, IAutoCompleteHandler autoCompleteHandler)
         {
-            _history = new List<string>();
+            _consoleDriver = consoleDriver;
+            History = new List<string>();
+            _keyHandler = new KeyHandler(consoleDriver, History, autoCompleteHandler);
         }
 
-        public static void AddHistory(params string[] text) => _history.AddRange(text);
-        public static List<string> GetHistory() => _history;
-        public static void ClearHistory() => _history = new List<string>();
-        public static bool HistoryEnabled { get; set; }
-        public static IAutoCompleteHandler AutoCompletionHandler { private get; set; }
+        public LineReader(IAutoCompleteHandler autoCompleteHandler) : this(new SystemConsole(), autoCompleteHandler)
+        {
+        }
 
-        public static string Read(string prompt = "", string @default = "")
+        public string Read(string prompt = "", string @default = "")
         {
             Console.Write(prompt);
-            KeyHandler keyHandler = new KeyHandler(new Console2(), _history, AutoCompletionHandler);
-            string text = GetText(keyHandler);
+
+            string text = GetText(_keyHandler);
 
             if (string.IsNullOrWhiteSpace(text) && !string.IsNullOrWhiteSpace(@default))
             {
@@ -32,29 +36,31 @@ namespace System
             }
             else if (HistoryEnabled)
             {
-                _history.Add(text);
+                History.Add(text);
             }
 
             return text;
         }
 
-        public static string ReadPassword(string prompt = "")
+        public string ReadPassword(string prompt = "")
         {
-            Console.Write(prompt);
-            KeyHandler keyHandler = new KeyHandler(new Console2() { PasswordMode = true }, null, null);
-            return GetText(keyHandler);
+            _consoleDriver.Write(prompt);
+            _consoleDriver.PasswordMode = true;
+            var result = GetText(_keyHandler);
+            _consoleDriver.PasswordMode = false;
+            return result;
         }
 
-        private static string GetText(KeyHandler keyHandler)
+        private string GetText(KeyHandler keyHandler)
         {
-            ConsoleKeyInfo keyInfo = Console.ReadKey(true);
+            ConsoleKeyInfo keyInfo = _consoleDriver.ReadKey(true);
             while (keyInfo.Key != ConsoleKey.Enter)
             {
                 keyHandler.Handle(keyInfo);
-                keyInfo = Console.ReadKey(true);
+                keyInfo = _consoleDriver.ReadKey(true);
             }
 
-            Console.WriteLine();
+            _consoleDriver.WriteLine(string.Empty);
             return keyHandler.Text;
         }
     }
